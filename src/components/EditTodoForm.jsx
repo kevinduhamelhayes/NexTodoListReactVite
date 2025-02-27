@@ -37,14 +37,16 @@ export const EditTodoForm = ({ editTodo, task }) => {
         className={error ? "input-error" : ""}
       />
       {error && <p className="error-message">{error}</p>}
-      <button type="submit" className="edit-btn">Actualizar</button>
-      <button 
-        type="button" 
-        className="cancel-btn"
-        onClick={() => editTodo(task.task, task.id)}
-      >
-        Cancelar
-      </button>
+      <div className="buttons">
+        <button type="submit" className="edit-btn">Actualizar</button>
+        <button 
+          type="button" 
+          className="cancel-btn"
+          onClick={() => editTodo(task.task, task.id)}
+        >
+          Cancelar
+        </button>
+      </div>
     </form>
   );
 };

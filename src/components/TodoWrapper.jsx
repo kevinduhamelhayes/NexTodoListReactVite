@@ -4,19 +4,30 @@ import { TodoForm } from "./TodoForm";
 import { v4 as uuidv4 } from "uuid";
 import { EditTodoForm } from "./EditTodoForm";
 
+const STORAGE_KEY = 'react-todo-list-todos';
+
 export const TodoWrapper = () => {
-  const [todos, setTodos] = useState([]);
-  const [filter, setFilter] = useState("all");
+  const [todos, setTodos] = useState(() => {
+    // Inicializar el estado desde localStorage
+    try {
+      const savedTodos = localStorage.getItem(STORAGE_KEY);
+      return savedTodos ? JSON.parse(savedTodos) : [];
+    } catch (error) {
+      console.error('Error loading todos from localStorage:', error);
+      return [];
+    }
+  });
   
-  // Cargar datos desde localStorage al iniciar
-  useEffect(() => {
-    const savedTodos = JSON.parse(localStorage.getItem("todos")) || [];
-    setTodos(savedTodos);
-  }, []);
+  const [filter, setFilter] = useState("all");
   
   // Guardar en localStorage cada vez que todos cambia
   useEffect(() => {
-    localStorage.setItem("todos", JSON.stringify(todos));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+      console.log('Todos saved to localStorage:', todos);
+    } catch (error) {
+      console.error('Error saving todos to localStorage:', error);
+    }
   }, [todos]);
 
   const addTodo = (todo) => {
@@ -31,47 +42,48 @@ export const TodoWrapper = () => {
         minute: '2-digit',
       });
       
-      setTodos([
-        ...todos,
-        { 
-          id: uuidv4(), 
-          task: todo, 
-          completed: false, 
-          isEditing: false,
-          date: formattedDate
-        },
-      ]);
+      const newTodo = { 
+        id: uuidv4(), 
+        task: todo, 
+        completed: false, 
+        isEditing: false,
+        date: formattedDate
+      };
+      
+      setTodos(prevTodos => [...prevTodos, newTodo]);
     }
   }
 
-  const deleteTodo = (id) => setTodos(todos.filter((todo) => todo.id !== id));
+  const deleteTodo = (id) => {
+    setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
+  };
 
   const toggleComplete = (id) => {
-    setTodos(
-      todos.map((todo) =>
+    setTodos(prevTodos =>
+      prevTodos.map(todo =>
         todo.id === id ? { ...todo, completed: !todo.completed } : todo
       )
     );
-  }
+  };
 
   const editTodo = (id) => {
-    setTodos(
-      todos.map((todo) =>
+    setTodos(prevTodos =>
+      prevTodos.map(todo =>
         todo.id === id ? { ...todo, isEditing: !todo.isEditing } : todo
       )
     );
-  }
+  };
 
   const editTask = (task, id) => {
-    setTodos(
-      todos.map((todo) =>
+    setTodos(prevTodos =>
+      prevTodos.map(todo =>
         todo.id === id ? { ...todo, task, isEditing: !todo.isEditing } : todo
       )
     );
   };
   
   const clearCompletedTodos = () => {
-    setTodos(todos.filter((todo) => !todo.completed));
+    setTodos(prevTodos => prevTodos.filter(todo => !todo.completed));
   };
   
   // Filtrar tareas según el estado seleccionado
@@ -90,7 +102,18 @@ export const TodoWrapper = () => {
     <div className="TodoWrapper">
       <h1>Get Things Done!</h1>
       <div className="todo-stats">
-        <p>Total: {todos.length} | Completadas: {completedCount} | Pendientes: {activeCount}</p>
+        <div className="stat-item">
+          <span>Total:</span>
+          <strong>{todos.length}</strong>
+        </div>
+        <div className="stat-item">
+          <span>Completadas:</span>
+          <strong>{completedCount}</strong>
+        </div>
+        <div className="stat-item">
+          <span>Pendientes:</span>
+          <strong>{activeCount}</strong>
+        </div>
       </div>
       <TodoForm addTodo={addTodo} />
       
